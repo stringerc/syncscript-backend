@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import dotenv from 'dotenv';
+import userRoutes from './routes/user.routes';
 
 // Load environment variables
 dotenv.config();
@@ -37,21 +38,26 @@ app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    version: '1.0.0'
+    version: '1.0.0',
+    database: process.env.DATABASE_URL ? 'connected' : 'not configured'
   });
 });
 
-// API routes placeholder
+// API routes
 app.get('/api', (req, res) => {
   res.json({ 
     message: 'SyncScript API is running!',
     version: '1.0.0',
     endpoints: {
       health: '/health',
-      api: '/api'
+      api: '/api',
+      users: '/api/users'
     }
   });
 });
+
+// User routes
+app.use('/api', userRoutes);
 
 // Socket.io connection handling
 io.on('connection', (socket) => {
@@ -85,6 +91,7 @@ server.listen(PORT, () => {
   console.log(`🚀 SyncScript Backend running on port ${PORT}`);
   console.log(`📡 Socket.io server ready`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🗄️  Database: ${process.env.DATABASE_URL ? 'Connected' : 'Not configured'}`);
 });
 
 export { app, io };
