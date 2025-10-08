@@ -56,9 +56,13 @@ export class TaskController {
   // Get tasks (with optional energy matching)
   static async getTasks(req: Request, res: Response): Promise<void> {
     try {
+      console.log('[getTasks] Starting request');
       const userId = (req as any).userId;
+      console.log('[getTasks] UserId:', userId);
+      console.log('[getTasks] Auth object:', req.auth);
       
       if (!userId) {
+        console.log('[getTasks] No userId found, returning 401');
         res.status(401).json({ error: 'Authentication required' });
         return;
       }
@@ -70,10 +74,13 @@ export class TaskController {
       const limit = parseInt(req.query.limit as string) || 100;
       const offset = parseInt(req.query.offset as string) || 0;
 
+      console.log('[getTasks] Fetching tasks with filters:', { energyLevel, status, projectId, priority });
+
       let tasks;
 
       if (energyLevel) {
         // Get tasks with energy matching
+        console.log('[getTasks] Using energy matching');
         tasks = await TaskModel.getTasksWithEnergyMatch(userId, energyLevel, {
           status,
           project_id: projectId,
@@ -81,12 +88,15 @@ export class TaskController {
         });
       } else {
         // Get regular tasks
+        console.log('[getTasks] Using regular task fetch');
         tasks = await TaskModel.getUserTasks(userId, {
           status,
           project_id: projectId,
           priority
         }, limit, offset);
       }
+
+      console.log('[getTasks] Tasks fetched successfully, count:', tasks.length);
 
       res.json({
         tasks,
@@ -95,8 +105,12 @@ export class TaskController {
         filters: { status, project_id: projectId, priority, energy_level: energyLevel }
       });
     } catch (error) {
-      console.error('Error fetching tasks:', error);
-      res.status(500).json({ error: 'Failed to fetch tasks' });
+      console.error('[getTasks] Error fetching tasks:', error);
+      console.error('[getTasks] Error stack:', (error as Error).stack);
+      res.status(500).json({ 
+        error: 'Failed to fetch tasks',
+        message: (error as Error).message
+      });
     }
   }
 
