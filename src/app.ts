@@ -18,7 +18,11 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: [
+      "http://localhost:3000",
+      "https://syncscript.app",
+      "https://www.syncscript.app"
+    ],
     methods: ["GET", "POST"]
   }
 });
@@ -29,7 +33,11 @@ const PORT = process.env.PORT || 3001;
 app.use(helmet());
 app.use(compression());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:3000",
+  origin: [
+    "http://localhost:3000",
+    "https://syncscript.app",
+    "https://www.syncscript.app"
+  ],
   credentials: true
 }));
 app.use(morgan('combined'));
