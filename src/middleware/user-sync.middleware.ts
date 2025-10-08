@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { db } from '../utils/database';
+import db from '../utils/database';
 
 /**
  * Middleware to sync Auth0 user with our database
