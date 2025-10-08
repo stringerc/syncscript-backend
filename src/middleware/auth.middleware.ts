@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { expressjwt } from 'express-jwt';
 import jwksRsa from 'jwks-rsa';
+import { syncUser } from './user-sync.middleware';
 
 // Auth0 configuration
 const auth0Domain = process.env.AUTH0_DOMAIN || '';
@@ -36,15 +37,15 @@ export const optionalAuth = expressjwt({
 // Extract user info from JWT
 export const extractUser = (req: Request, res: Response, next: NextFunction) => {
   if (req.auth) {
-    // User is authenticated, attach user info to request
-    (req as any).userId = req.auth.sub;
+    // User is authenticated, attach Auth0 ID to request
+    (req as any).userId = req.auth.sub; // This will be the Auth0 ID
     (req as any).userEmail = req.auth.email;
   }
   next();
 };
 
-// Require authentication
-export const requireAuth = [checkJwt, extractUser];
+// Require authentication (with user sync)
+export const requireAuth = [checkJwt, extractUser, syncUser];
 
 // Optional authentication
 export const optionalAuthMiddleware = [optionalAuth, extractUser];
