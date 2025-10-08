@@ -33,17 +33,18 @@ app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Health check endpoint
+// Health check endpoint (public)
 app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
     version: '1.0.0',
-    database: process.env.DATABASE_URL ? 'connected' : 'not configured'
+    database: process.env.DATABASE_URL ? 'connected' : 'not configured',
+    auth: process.env.AUTH0_DOMAIN ? 'configured' : 'not configured'
   });
 });
 
-// API routes
+// API info endpoint (public)
 app.get('/api', (req, res) => {
   res.json({ 
     message: 'SyncScript API is running!',
@@ -52,11 +53,12 @@ app.get('/api', (req, res) => {
       health: '/health',
       api: '/api',
       users: '/api/users'
-    }
+    },
+    authentication: 'Auth0 (JWT Bearer token required for protected routes)'
   });
 });
 
-// User routes
+// API routes
 app.use('/api', userRoutes);
 
 // Socket.io connection handling
@@ -73,8 +75,16 @@ io.on('connection', (socket) => {
   });
 });
 
-// Error handling middleware
+// Auth error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (err.name === 'UnauthorizedError') {
+    res.status(401).json({ 
+      error: 'Unauthorized',
+      message: 'Invalid or missing authentication token'
+    });
+    return;
+  }
+  
   console.error(err.stack);
   res.status(500).json({ 
     error: 'Something went wrong!',
@@ -92,6 +102,7 @@ server.listen(PORT, () => {
   console.log(`📡 Socket.io server ready`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🗄️  Database: ${process.env.DATABASE_URL ? 'Connected' : 'Not configured'}`);
+  console.log(`🔐 Auth0: ${process.env.AUTH0_DOMAIN ? 'Configured' : 'Not configured'}`);
 });
 
 export { app, io };
