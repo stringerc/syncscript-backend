@@ -7,6 +7,9 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import dotenv from 'dotenv';
 import userRoutes from './routes/user.routes';
+import energyRoutes from './routes/energy.routes';
+import taskRoutes from './routes/task.routes';
+import projectRoutes from './routes/project.routes';
 
 // Load environment variables
 dotenv.config();
@@ -40,7 +43,8 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     version: '1.0.0',
     database: process.env.DATABASE_URL ? 'connected' : 'not configured',
-    auth: process.env.AUTH0_DOMAIN ? 'configured' : 'not configured'
+    auth: process.env.AUTH0_DOMAIN ? 'configured' : 'not configured',
+    cache: process.env.REDIS_URL ? 'connected' : 'not configured'
   });
 });
 
@@ -52,7 +56,10 @@ app.get('/api', (req, res) => {
     endpoints: {
       health: '/health',
       api: '/api',
-      users: '/api/users'
+      users: '/api/users',
+      energy: '/api/energy',
+      tasks: '/api/tasks',
+      projects: '/api/projects'
     },
     authentication: 'Auth0 (JWT Bearer token required for protected routes)'
   });
@@ -60,6 +67,9 @@ app.get('/api', (req, res) => {
 
 // API routes
 app.use('/api', userRoutes);
+app.use('/api', energyRoutes);
+app.use('/api', taskRoutes);
+app.use('/api', projectRoutes);
 
 // Socket.io connection handling
 io.on('connection', (socket) => {
@@ -68,6 +78,16 @@ io.on('connection', (socket) => {
   socket.on('join-user', (userId) => {
     socket.join(`user-${userId}`);
     console.log(`User ${userId} joined their room`);
+  });
+  
+  socket.on('energy-update', (data) => {
+    // Broadcast energy update to user's room
+    io.to(`user-${data.userId}`).emit('energy-updated', data);
+  });
+  
+  socket.on('task-completed', (data) => {
+    // Broadcast task completion to user's room
+    io.to(`user-${data.userId}`).emit('task-completed', data);
   });
   
   socket.on('disconnect', () => {
@@ -103,6 +123,7 @@ server.listen(PORT, () => {
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🗄️  Database: ${process.env.DATABASE_URL ? 'Connected' : 'Not configured'}`);
   console.log(`🔐 Auth0: ${process.env.AUTH0_DOMAIN ? 'Configured' : 'Not configured'}`);
+  console.log(`💾 Redis: ${process.env.REDIS_URL ? 'Connected' : 'Not configured'}`);
 });
 
 export { app, io };
