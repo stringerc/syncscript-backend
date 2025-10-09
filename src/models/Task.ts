@@ -171,29 +171,43 @@ export class TaskModel {
     limit = 100,
     offset = 0
   ): Promise<Task[]> {
-    let query = 'SELECT * FROM tasks WHERE user_id = $1';
+    let query = `
+      SELECT 
+        t.*,
+        CASE 
+          WHEN p.id IS NOT NULL THEN json_build_object(
+            'id', p.id,
+            'name', p.name,
+            'color', p.color
+          )
+          ELSE NULL
+        END as project
+      FROM tasks t
+      LEFT JOIN projects p ON t.project_id = p.id
+      WHERE t.user_id = $1
+    `;
     const params: any[] = [userId];
     let paramCount = 2;
 
     if (filters?.status) {
-      query += ` AND status = $${paramCount}`;
+      query += ` AND t.status = $${paramCount}`;
       params.push(filters.status);
       paramCount++;
     }
 
     if (filters?.project_id) {
-      query += ` AND project_id = $${paramCount}`;
+      query += ` AND t.project_id = $${paramCount}`;
       params.push(filters.project_id);
       paramCount++;
     }
 
     if (filters?.priority) {
-      query += ` AND priority = $${paramCount}`;
+      query += ` AND t.priority = $${paramCount}`;
       params.push(filters.priority);
       paramCount++;
     }
 
-    query += ` ORDER BY priority DESC, due_date ASC NULLS LAST LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
+    query += ` ORDER BY t.priority DESC, t.due_date ASC NULLS LAST LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
     params.push(limit, offset);
 
     return await db.any(query, params);
