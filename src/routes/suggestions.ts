@@ -109,9 +109,9 @@ router.get('/', requireAuth, async (req: Request, res: Response): Promise<void> 
         }
         // Based on typical patterns
         else if (currentPattern && currentPattern.count > 5) {
-          const patternMatch = task.energy_level <= currentPattern.avgenergy + 10;
+          const patternMatch = task.energy_level <= currentPattern.avgEnergy + 10;
           if (patternMatch) {
-            reason = `You typically have ${Math.round(currentPattern.avgenergy)} energy at this hour - good time for this task!`;
+            reason = `You typically have ${Math.round(currentPattern.avgEnergy)} energy at this hour - good time for this task!`;
             confidence = 70;
           } else {
             reason = `Consider this task - it matches your current capacity.`;
