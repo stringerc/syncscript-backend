@@ -167,5 +167,47 @@ router.post('/run-recurrence-migration', async (req: Request, res: Response): Pr
   }
 });
 
+// Run teams migration endpoint
+router.post('/run-teams-migration', async (req: Request, res: Response): Promise<void> => {
+  try {
+    console.log('🔄 Running teams migration...');
+    
+    // Read the migration file
+    const migrationPath = path.join(__dirname, '../../migrations/007_create_teams_tables.sql');
+    const sql = fs.readFileSync(migrationPath, 'utf8');
+    
+    // Execute the migration
+    await db.none(sql);
+    
+    console.log('✅ Teams migration completed successfully!');
+    
+    res.status(200).json({
+      success: true,
+      message: 'Teams tables created successfully! 🎉',
+      details: 'Created teams, team_members, team_invites, shared_projects, and task_dependencies tables with indexes.'
+    });
+    return;
+  } catch (error: any) {
+    console.error('❌ Migration error:', error);
+    
+    // If tables already exist, that's okay
+    if (error.message && error.message.includes('already exists')) {
+      res.status(200).json({
+        success: true,
+        message: 'Teams tables already exist! ✅',
+        details: 'Migration was already run previously.'
+      });
+      return;
+    }
+    
+    res.status(500).json({
+      success: false,
+      error: 'Failed to run migration',
+      message: error.message
+    });
+    return;
+  }
+});
+
 export default router;
 
