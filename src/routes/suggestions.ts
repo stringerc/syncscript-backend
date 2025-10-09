@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { requireAuth } from '../middleware/auth.middleware';
-import db from '../db';
+import db from '../utils/database';
 import { z } from 'zod';
 
 const router = Router();
@@ -58,8 +58,8 @@ router.get('/', requireAuth, async (req: Request, res: Response): Promise<void> 
     `, [userId]);
 
     // 2. Get current expected energy level
-    const currentPattern = energyPatterns.find(p => p.hour === currentHour);
-    const expectedEnergy = currentPattern ? Math.round(currentPattern.avgenergy) : 50;
+    const currentPattern = energyPatterns.find((p: EnergyPattern) => p.hour === currentHour);
+    const expectedEnergy = currentPattern ? Math.round(currentPattern.avgEnergy) : 50;
 
     // 3. Get today's most recent energy log
     const recentEnergy = await db.oneOrNone(`
