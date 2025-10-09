@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
-import { requireAuth } from '../middleware/auth';
-import db from '../config/database';
+import { requireAuth } from '../middleware/auth.middleware';
+import db from '../db';
 import { z } from 'zod';
 
 const router = Router();
@@ -12,8 +12,19 @@ interface EnergyPattern {
   count: number;
 }
 
+interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  energy_level: number;
+  priority: string;
+  due_date?: string;
+  project_name?: string;
+  project_color?: string;
+}
+
 interface TaskSuggestion {
-  task: any;
+  task: Task;
   reason: string;
   confidence: number;
   energyMatch: number;
@@ -23,11 +34,12 @@ interface TaskSuggestion {
  * GET /api/suggestions
  * Get smart task suggestions based on energy patterns
  */
-router.get('/', requireAuth, async (req: Request, res: Response) => {
+router.get('/', requireAuth, async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.auth?.userId;
     if (!userId) {
-      return res.status(401).json({ error: 'User ID not found in token' });
+      res.status(401).json({ error: 'User ID not found in token' });
+      return;
     }
 
     const currentHour = new Date().getHours();
@@ -35,9 +47,9 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
     // 1. Get user's energy patterns by hour of day
     const energyPatterns = await db.any<EnergyPattern>(`
       SELECT 
-        EXTRACT(HOUR FROM created_at) as hour,
-        AVG(level) as avg_energy,
-        COUNT(*) as count
+        EXTRACT(HOUR FROM created_at)::integer as hour,
+        AVG(level)::numeric as avg_energy,
+        COUNT(*)::integer as count
       FROM energy_logs
       WHERE user_id = $1
         AND created_at > NOW() - INTERVAL '30 days'
@@ -73,7 +85,7 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
 
     // 5. Generate suggestions based on energy matching
     const suggestions: TaskSuggestion[] = incompleteTasks
-      .map(task => {
+      .map((task: Task) => {
         const energyDiff = Math.abs(task.energy_level - currentEnergy);
         const energyMatch = 100 - (energyDiff * 2); // 0-100 score
 
@@ -119,8 +131,8 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
           energyMatch
         };
       })
-      .filter(s => s.confidence >= 60) // Only show confident suggestions
-      .sort((a, b) => b.confidence - a.confidence)
+      .filter((s: TaskSuggestion) => s.confidence >= 60) // Only show confident suggestions
+      .sort((a: TaskSuggestion, b: TaskSuggestion) => b.confidence - a.confidence)
       .slice(0, 5); // Top 5 suggestions
 
     // 6. Get energy insights
@@ -129,12 +141,12 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
       expectedEnergy,
       trend: currentEnergy > expectedEnergy ? 'above' : currentEnergy < expectedEnergy ? 'below' : 'normal',
       peakHours: energyPatterns
-        .filter(p => p.count >= 3)
-        .sort((a, b) => b.avgenergy - a.avgenergy)
+        .filter((p: EnergyPattern) => p.count >= 3)
+        .sort((a: EnergyPattern, b: EnergyPattern) => b.avgEnergy - a.avgEnergy)
         .slice(0, 3)
-        .map(p => ({
+        .map((p: EnergyPattern) => ({
           hour: p.hour,
-          energy: Math.round(p.avgenergy)
+          energy: Math.round(p.avgEnergy)
         }))
     };
 
@@ -160,11 +172,12 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
  * POST /api/suggestions/accept
  * Accept a suggestion and optionally schedule it
  */
-router.post('/accept', requireAuth, async (req: Request, res: Response) => {
+router.post('/accept', requireAuth, async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.auth?.userId;
     if (!userId) {
-      return res.status(401).json({ error: 'User ID not found in token' });
+      res.status(401).json({ error: 'User ID not found in token' });
+      return;
     }
 
     const schema = z.object({
@@ -190,7 +203,8 @@ router.post('/accept', requireAuth, async (req: Request, res: Response) => {
 
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation error', details: error.errors });
+      res.status(400).json({ error: 'Validation error', details: error.errors });
+      return;
     }
     console.error('Error accepting suggestion:', error);
     res.status(500).json({ 
