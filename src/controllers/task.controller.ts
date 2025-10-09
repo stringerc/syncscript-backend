@@ -2,6 +2,13 @@ import { Request, Response } from 'express';
 import { TaskModel, CreateTaskData } from '../models/Task';
 import { z } from 'zod';
 
+// Tag schema
+const tagSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  color: z.string()
+});
+
 // Validation schemas
 const createTaskSchema = z.object({
   title: z.string().min(1).max(500),
@@ -11,6 +18,7 @@ const createTaskSchema = z.object({
   project_id: z.string().uuid().optional(),
   due_date: z.string().datetime().optional(),
   estimated_duration: z.number().int().positive().optional(),
+  tags: z.array(tagSchema).optional(),
 });
 
 const updateTaskSchema = createTaskSchema.partial();
