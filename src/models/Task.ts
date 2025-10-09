@@ -262,6 +262,12 @@ export class TaskModel {
       paramCount++;
     }
 
+    if (data.project_id !== undefined) {
+      fields.push(`project_id = $${paramCount}`);
+      values.push(data.project_id);
+      paramCount++;
+    }
+
     values.push(id, userId);
 
     const query = `
