@@ -98,36 +98,46 @@ export class TaskModel {
     }
   ): Promise<TaskWithEnergyMatch[]> {
     let query = `
-      SELECT *,
+      SELECT 
+        t.*,
         CASE
-          WHEN energy_requirement = $2 THEN true
+          WHEN t.energy_requirement = $2 THEN true
           ELSE false
         END as energy_match,
         CASE
-          WHEN energy_requirement = $2 THEN 1.0
-          WHEN ABS(energy_requirement - $2) = 1 THEN 0.5
+          WHEN t.energy_requirement = $2 THEN 1.0
+          WHEN ABS(t.energy_requirement - $2) = 1 THEN 0.5
           ELSE 0.0
-        END as energy_match_score
-      FROM tasks
-      WHERE user_id = $1 AND status = 'pending'
+        END as energy_match_score,
+        CASE 
+          WHEN p.id IS NOT NULL THEN json_build_object(
+            'id', p.id,
+            'name', p.name,
+            'color', p.color
+          )
+          ELSE NULL
+        END as project
+      FROM tasks t
+      LEFT JOIN projects p ON t.project_id = p.id
+      WHERE t.user_id = $1 AND t.status = 'pending'
     `;
 
     const params: any[] = [userId, currentEnergyLevel];
     let paramCount = 3;
 
     if (filters?.project_id) {
-      query += ` AND project_id = $${paramCount}`;
+      query += ` AND t.project_id = $${paramCount}`;
       params.push(filters.project_id);
       paramCount++;
     }
 
     if (filters?.priority) {
-      query += ` AND priority = $${paramCount}`;
+      query += ` AND t.priority = $${paramCount}`;
       params.push(filters.priority);
       paramCount++;
     }
 
-    query += ` ORDER BY energy_match_score DESC, priority DESC, due_date ASC NULLS LAST`;
+    query += ` ORDER BY energy_match_score DESC, t.priority DESC, t.due_date ASC NULLS LAST`;
 
     const tasks = await db.any(query, params);
 
