@@ -10,6 +10,7 @@ import userRoutes from './routes/user.routes';
 import energyRoutes from './routes/energy.routes';
 import taskRoutes from './routes/task.routes';
 import projectRoutes from './routes/project.routes';
+import migrationRoutes from './routes/migration.routes';
 
 // Load environment variables
 dotenv.config();
@@ -78,6 +79,7 @@ app.use('/api', userRoutes);
 app.use('/api', energyRoutes);
 app.use('/api', taskRoutes);
 app.use('/api', projectRoutes);
+app.use('/api/migrations', migrationRoutes);
 
 // Socket.io connection handling
 io.on('connection', (socket) => {
