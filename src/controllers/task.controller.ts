@@ -17,6 +17,13 @@ const subtaskSchema = z.object({
   created_at: z.string()
 });
 
+// Note schema
+const noteSchema = z.object({
+  id: z.string(),
+  text: z.string(),
+  created_at: z.string()
+});
+
 // Validation schemas
 const createTaskSchema = z.object({
   title: z.string().min(1).max(500),
@@ -28,6 +35,7 @@ const createTaskSchema = z.object({
   estimated_duration: z.number().int().positive().optional(),
   tags: z.array(tagSchema).optional(),
   subtasks: z.array(subtaskSchema).optional(),
+  notes: z.array(noteSchema).optional(),
 });
 
 const updateTaskSchema = createTaskSchema.partial();

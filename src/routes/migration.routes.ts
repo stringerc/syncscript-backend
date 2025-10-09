@@ -89,5 +89,44 @@ router.post('/run-subtasks-migration', async (req: Request, res: Response): Prom
   }
 });
 
+// Run notes migration endpoint
+router.post('/run-notes-migration', async (req: Request, res: Response): Promise<void> => {
+  try {
+    console.log('🔄 Running notes migration...');
+    
+    const migrationPath = path.join(__dirname, '../../migrations/005_add_notes_to_tasks.sql');
+    const sql = fs.readFileSync(migrationPath, 'utf8');
+    
+    await db.none(sql);
+    
+    console.log('✅ Notes migration completed successfully!');
+    
+    res.status(200).json({
+      success: true,
+      message: 'Notes column added successfully! 🎉',
+      details: 'The tasks table now has a notes column (JSONB type) with a GIN index for fast queries.'
+    });
+    return;
+  } catch (error: any) {
+    console.error('❌ Migration error:', error);
+    
+    if (error.message && error.message.includes('already exists')) {
+      res.status(200).json({
+        success: true,
+        message: 'Notes column already exists! ✅',
+        details: 'Migration was already run previously.'
+      });
+      return;
+    }
+    
+    res.status(500).json({
+      success: false,
+      error: 'Failed to run migration',
+      message: error.message
+    });
+    return;
+  }
+});
+
 export default router;
 
