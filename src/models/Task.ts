@@ -6,6 +6,13 @@ export interface Tag {
   color: string;
 }
 
+export interface Subtask {
+  id: string;
+  text: string;
+  completed: boolean;
+  created_at: string;
+}
+
 export interface Task {
   id: string;
   user_id: string;
@@ -21,6 +28,7 @@ export interface Task {
   actual_duration?: number;
   points: number;
   tags?: Tag[];
+  subtasks?: Subtask[];
   created_at: Date;
   updated_at: Date;
 }
@@ -35,6 +43,7 @@ export interface CreateTaskData {
   due_date?: Date;
   estimated_duration?: number;
   tags?: Tag[];
+  subtasks?: Subtask[];
 }
 
 export interface TaskWithEnergyMatch extends Task {
@@ -49,9 +58,9 @@ export class TaskModel {
     const query = `
       INSERT INTO tasks (
         user_id, project_id, title, description,
-        energy_requirement, priority, due_date, estimated_duration, points, tags
+        energy_requirement, priority, due_date, estimated_duration, points, tags, subtasks
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING *
     `;
     
@@ -71,7 +80,8 @@ export class TaskModel {
       data.due_date || null,
       data.estimated_duration || null,
       basePoints,
-      JSON.stringify(data.tags || [])
+      JSON.stringify(data.tags || []),
+      JSON.stringify(data.subtasks || [])
     ]);
   }
 
@@ -280,6 +290,12 @@ export class TaskModel {
     if (data.tags !== undefined) {
       fields.push(`tags = $${paramCount}`);
       values.push(JSON.stringify(data.tags));
+      paramCount++;
+    }
+
+    if (data.subtasks !== undefined) {
+      fields.push(`subtasks = $${paramCount}`);
+      values.push(JSON.stringify(data.subtasks));
       paramCount++;
     }
 

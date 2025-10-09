@@ -9,6 +9,14 @@ const tagSchema = z.object({
   color: z.string()
 });
 
+// Subtask schema
+const subtaskSchema = z.object({
+  id: z.string(),
+  text: z.string(),
+  completed: z.boolean(),
+  created_at: z.string()
+});
+
 // Validation schemas
 const createTaskSchema = z.object({
   title: z.string().min(1).max(500),
@@ -19,6 +27,7 @@ const createTaskSchema = z.object({
   due_date: z.string().datetime().optional(),
   estimated_duration: z.number().int().positive().optional(),
   tags: z.array(tagSchema).optional(),
+  subtasks: z.array(subtaskSchema).optional(),
 });
 
 const updateTaskSchema = createTaskSchema.partial();
