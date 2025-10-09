@@ -12,6 +12,8 @@ import taskRoutes from './routes/task.routes';
 import projectRoutes from './routes/project.routes';
 import migrationRoutes from './routes/migration.routes';
 import suggestionsRoutes from './routes/suggestions';
+import teamsRoutes from './routes/teams.routes';
+import dependenciesRoutes from './routes/dependencies.routes';
 
 // Load environment variables
 dotenv.config();
@@ -84,7 +86,9 @@ app.use('/api', userRoutes);
 app.use('/api', energyRoutes);
 app.use('/api/suggestions', suggestionsRoutes);
 app.use('/api', taskRoutes);
+app.use('/api/tasks', dependenciesRoutes);
 app.use('/api', projectRoutes);
+app.use('/api/teams', teamsRoutes);
 app.use('/api/migrations', migrationRoutes);
 
 // Socket.io connection handling
