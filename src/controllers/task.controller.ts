@@ -24,6 +24,16 @@ const noteSchema = z.object({
   created_at: z.string()
 });
 
+// Recurrence schema
+const recurrenceSchema = z.object({
+  frequency: z.enum(['none', 'daily', 'weekly', 'monthly']),
+  interval: z.number().int().min(1).max(30),
+  days_of_week: z.array(z.number().int().min(0).max(6)).optional(),
+  day_of_month: z.number().int().min(1).max(31).optional(),
+  end_date: z.string().optional(),
+  is_active: z.boolean()
+});
+
 // Validation schemas
 const createTaskSchema = z.object({
   title: z.string().min(1).max(500),
@@ -36,6 +46,7 @@ const createTaskSchema = z.object({
   tags: z.array(tagSchema).optional(),
   subtasks: z.array(subtaskSchema).optional(),
   notes: z.array(noteSchema).optional(),
+  recurrence: recurrenceSchema.optional(),
 });
 
 const updateTaskSchema = createTaskSchema.partial();

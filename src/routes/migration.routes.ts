@@ -128,5 +128,44 @@ router.post('/run-notes-migration', async (req: Request, res: Response): Promise
   }
 });
 
+// Run recurrence migration endpoint
+router.post('/run-recurrence-migration', async (req: Request, res: Response): Promise<void> => {
+  try {
+    console.log('🔄 Running recurrence migration...');
+    
+    const migrationPath = path.join(__dirname, '../../migrations/006_add_recurrence_to_tasks.sql');
+    const sql = fs.readFileSync(migrationPath, 'utf8');
+    
+    await db.none(sql);
+    
+    console.log('✅ Recurrence migration completed successfully!');
+    
+    res.status(200).json({
+      success: true,
+      message: 'Recurrence column added successfully! 🎉',
+      details: 'The tasks table now has a recurrence column (JSONB type) with a GIN index.'
+    });
+    return;
+  } catch (error: any) {
+    console.error('❌ Migration error:', error);
+    
+    if (error.message && error.message.includes('already exists')) {
+      res.status(200).json({
+        success: true,
+        message: 'Recurrence column already exists! ✅',
+        details: 'Migration was already run previously.'
+      });
+      return;
+    }
+    
+    res.status(500).json({
+      success: false,
+      error: 'Failed to run migration',
+      message: error.message
+    });
+    return;
+  }
+});
+
 export default router;
 

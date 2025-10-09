@@ -19,6 +19,17 @@ export interface TaskNote {
   created_at: string;
 }
 
+export type RecurrenceFrequency = 'none' | 'daily' | 'weekly' | 'monthly';
+
+export interface RecurrenceConfig {
+  frequency: RecurrenceFrequency;
+  interval: number;
+  days_of_week?: number[];
+  day_of_month?: number;
+  end_date?: string;
+  is_active: boolean;
+}
+
 export interface Task {
   id: string;
   user_id: string;
@@ -36,6 +47,7 @@ export interface Task {
   tags?: Tag[];
   subtasks?: Subtask[];
   notes?: TaskNote[];
+  recurrence?: RecurrenceConfig;
   created_at: Date;
   updated_at: Date;
 }
@@ -52,6 +64,7 @@ export interface CreateTaskData {
   tags?: Tag[];
   subtasks?: Subtask[];
   notes?: TaskNote[];
+  recurrence?: RecurrenceConfig;
 }
 
 export interface TaskWithEnergyMatch extends Task {
@@ -66,9 +79,9 @@ export class TaskModel {
     const query = `
       INSERT INTO tasks (
         user_id, project_id, title, description,
-        energy_requirement, priority, due_date, estimated_duration, points, tags, subtasks, notes
+        energy_requirement, priority, due_date, estimated_duration, points, tags, subtasks, notes, recurrence
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
       RETURNING *
     `;
     
@@ -90,7 +103,8 @@ export class TaskModel {
       basePoints,
       JSON.stringify(data.tags || []),
       JSON.stringify(data.subtasks || []),
-      JSON.stringify(data.notes || [])
+      JSON.stringify(data.notes || []),
+      data.recurrence ? JSON.stringify(data.recurrence) : null
     ]);
   }
 
@@ -311,6 +325,12 @@ export class TaskModel {
     if (data.notes !== undefined) {
       fields.push(`notes = $${paramCount}`);
       values.push(JSON.stringify(data.notes));
+      paramCount++;
+    }
+
+    if (data.recurrence !== undefined) {
+      fields.push(`recurrence = $${paramCount}`);
+      values.push(data.recurrence ? JSON.stringify(data.recurrence) : null);
       paramCount++;
     }
 
