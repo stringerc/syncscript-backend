@@ -6,7 +6,7 @@ import * as path from 'path';
 const router = Router();
 
 // Run migrations endpoint (temporary - remove after use)
-router.post('/run-tags-migration', async (req: Request, res: Response) => {
+router.post('/run-tags-migration', async (req: Request, res: Response): Promise<void> => {
   try {
     console.log('🔄 Running tags migration...');
     
@@ -24,16 +24,18 @@ router.post('/run-tags-migration', async (req: Request, res: Response) => {
       message: 'Tags column added successfully! 🎉',
       details: 'The tasks table now has a tags column (JSONB type) with a GIN index for fast queries.'
     });
+    return;
   } catch (error: any) {
     console.error('❌ Migration error:', error);
     
     // If column already exists, that's okay
     if (error.message && error.message.includes('already exists')) {
-      return res.status(200).json({
+      res.status(200).json({
         success: true,
         message: 'Tags column already exists! ✅',
         details: 'Migration was already run previously.'
       });
+      return;
     }
     
     res.status(500).json({
@@ -41,6 +43,7 @@ router.post('/run-tags-migration', async (req: Request, res: Response) => {
       error: 'Failed to run migration',
       message: error.message
     });
+    return;
   }
 });
 
