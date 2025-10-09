@@ -11,6 +11,7 @@ import energyRoutes from './routes/energy.routes';
 import taskRoutes from './routes/task.routes';
 import projectRoutes from './routes/project.routes';
 import migrationRoutes from './routes/migration.routes';
+import suggestionsRoutes from './routes/suggestions';
 
 // Load environment variables
 dotenv.config();
@@ -81,6 +82,7 @@ app.get('/api', (req, res) => {
 // API routes
 app.use('/api', userRoutes);
 app.use('/api', energyRoutes);
+app.use('/api/suggestions', suggestionsRoutes);
 app.use('/api', taskRoutes);
 app.use('/api', projectRoutes);
 app.use('/api/migrations', migrationRoutes);
