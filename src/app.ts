@@ -22,7 +22,9 @@ const io = new Server(server, {
     origin: [
       "http://localhost:3000",
       "https://syncscript.app",
-      "https://www.syncscript.app"
+      "https://www.syncscript.app",
+      /https:\/\/.*\.syncscript\.app$/,
+      /https:\/\/.*\.vercel\.app$/
     ],
     methods: ["GET", "POST"]
   }
@@ -37,7 +39,9 @@ app.use(cors({
   origin: [
     "http://localhost:3000",
     "https://syncscript.app",
-    "https://www.syncscript.app"
+    "https://www.syncscript.app",
+    /https:\/\/.*\.syncscript\.app$/,
+    /https:\/\/.*\.vercel\.app$/
   ],
   credentials: true
 }));
