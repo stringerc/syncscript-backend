@@ -14,6 +14,7 @@ import migrationRoutes from './routes/migration.routes';
 import suggestionsRoutes from './routes/suggestions';
 import teamsRoutes from './routes/teams.routes';
 import dependenciesRoutes from './routes/dependencies.routes';
+import notificationRoutes from './routes/notification.routes';
 
 // Load environment variables
 dotenv.config();
@@ -89,6 +90,7 @@ app.use('/api', taskRoutes);
 app.use('/api/tasks', dependenciesRoutes);
 app.use('/api', projectRoutes);
 app.use('/api/teams', teamsRoutes);
+app.use('/api', notificationRoutes);
 app.use('/api/migrations', migrationRoutes);
 
 // Socket.io connection handling
