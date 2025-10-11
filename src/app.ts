@@ -62,17 +62,11 @@ app.use('/api/auth', authRateLimiter); // 5 requests/min for auth
 app.use('/api/suggestions', aiRateLimiter); // 10 requests/min for AI
 app.use('/api', generalRateLimiter); // 100 requests/min for general API
 
-// CSRF protection (only for non-API routes)
+// CSRF protection is DISABLED for API routes
 // API routes use JWT authentication instead of CSRF tokens
-app.use((req, res, next) => {
-  // Skip CSRF for API routes (they use JWT auth)
-  if (req.path.startsWith('/api/') || req.path === '/health') {
-    return next();
-  }
-  // Apply CSRF for other routes
-  csrfProtection(req, res, next);
-});
-app.use(attachCSRFToken);
+// If you need CSRF for form-based routes in the future, add it selectively
+// app.use(csrfProtection); // Commented out - API uses JWT, not CSRF
+// app.use(attachCSRFToken);
 
 // Health check endpoint (public)
 app.get('/health', (req, res) => {
