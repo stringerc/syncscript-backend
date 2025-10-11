@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
+import cookieParser from 'cookie-parser';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import dotenv from 'dotenv';
@@ -15,6 +16,8 @@ import suggestionsRoutes from './routes/suggestions';
 import teamsRoutes from './routes/teams.routes';
 import dependenciesRoutes from './routes/dependencies.routes';
 import notificationRoutes from './routes/notification.routes';
+import { aiRateLimiter, generalRateLimiter, authRateLimiter } from './middleware/rateLimiter';
+import { csrfProtection, attachCSRFToken } from './middleware/csrf';
 
 // Load environment variables
 dotenv.config();
@@ -52,6 +55,16 @@ app.use(cors({
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+// Security middleware
+app.use(csrfProtection);
+app.use(attachCSRFToken);
+
+// Rate limiting
+app.use('/api/auth', authRateLimiter); // 5 requests/min for auth
+app.use('/api/suggestions', aiRateLimiter); // 10 requests/min for AI
+app.use('/api', generalRateLimiter); // 100 requests/min for general API
 
 // Health check endpoint (public)
 app.get('/health', (req, res) => {
