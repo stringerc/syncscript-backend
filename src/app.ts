@@ -57,14 +57,22 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Security middleware
-app.use(csrfProtection);
-app.use(attachCSRFToken);
-
-// Rate limiting
+// Rate limiting (applied first)
 app.use('/api/auth', authRateLimiter); // 5 requests/min for auth
 app.use('/api/suggestions', aiRateLimiter); // 10 requests/min for AI
 app.use('/api', generalRateLimiter); // 100 requests/min for general API
+
+// CSRF protection (only for non-API routes)
+// API routes use JWT authentication instead of CSRF tokens
+app.use((req, res, next) => {
+  // Skip CSRF for API routes (they use JWT auth)
+  if (req.path.startsWith('/api/') || req.path === '/health') {
+    return next();
+  }
+  // Apply CSRF for other routes
+  csrfProtection(req, res, next);
+});
+app.use(attachCSRFToken);
 
 // Health check endpoint (public)
 app.get('/health', (req, res) => {
